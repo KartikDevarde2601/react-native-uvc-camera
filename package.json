@@ -82,7 +82,7 @@
     "react-native-builder-bob": "^0.40.15",
     "release-it": "^19.0.4",
     "turbo": "^2.5.6",
-    "typescript": "^5.9.2"
+    "typescript": "5.5.3"
   },
   "peerDependencies": {
     "react": "*",
@@ -111,12 +111,12 @@
     ]
   },
   "codegenConfig": {
-        "name": "UvcCameraViewSpec",
-        "type": "all",
-        "jsSrcsDir": "src",
-        "android": {
-          "javaPackageName": "com.uvccamera"
-        }
+    "name": "UvcCameraViewSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.uvccamera"
+    }
   },
   "prettier": {
     "quoteProps": "consistent",
