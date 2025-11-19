@@ -111,12 +111,12 @@
     ]
   },
   "codegenConfig": {
-    "name": "UvcCameraSpec",
-    "type": "modules",
-    "jsSrcsDir": "src",
-    "android": {
-      "javaPackageName": "com.uvccamera"
-    }
+        "name": "UvcCameraViewSpec",
+        "type": "all",
+        "jsSrcsDir": "src",
+        "android": {
+          "javaPackageName": "com.uvccamera"
+        }
   },
   "prettier": {
     "quoteProps": "consistent",

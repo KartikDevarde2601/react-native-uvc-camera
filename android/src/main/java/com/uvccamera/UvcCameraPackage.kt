@@ -4,6 +4,7 @@ import com.facebook.react.BaseReactPackage
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.module.model.ReactModuleInfo
+import com.facebook.react.uimanager.ViewManager
 import com.facebook.react.module.model.ReactModuleInfoProvider
 import java.util.HashMap
 
@@ -14,6 +15,12 @@ class UvcCameraPackage : BaseReactPackage() {
     } else {
       null
     }
+  }
+
+  override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {
+    val viewManagers: MutableList<ViewManager<*, *>> = ArrayList()
+    viewManagers.add(UvcCameraViewManager())
+    return viewManagers
   }
 
   override fun getReactModuleInfoProvider(): ReactModuleInfoProvider {
