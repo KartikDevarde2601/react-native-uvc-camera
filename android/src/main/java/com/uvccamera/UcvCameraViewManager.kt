@@ -30,11 +30,6 @@ class UvcCameraViewManager : SimpleViewManager<UvcCameraView>(),
     return UvcCameraView(context)
   }
 
-  @ReactProp(name = "color")
-  override fun setColor(view: UvcCameraView?, color: String?) {
-    view?.setBackgroundColor(Color.parseColor(color))
-  }
-
   companion object {
     const val NAME = "UvcCameraView"
   }
