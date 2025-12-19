@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,29 +11,50 @@ import {
   Text,
 } from 'react-native';
 
-import { UvcCamera, type UvcCameraHandle } from 'react-native-uvc-camera';
+import {
+  UvcCamera,
+  type UvcCameraHandle,
+  type CameraError,
+  type DeviceInfo,
+  CameraErrorCodes,
+} from 'react-native-uvc-camera';
 
 export default function App() {
   // ============================================================
-  // 1. ALL HOOKS MUST BE AT THE TOP (Always in the same order)
+  // 1. STATE HOOKS
   // ============================================================
 
-  // Hook 1: Permission State
   const [hasPermission, setHasPermission] = useState(false);
-
-  // Hook 2: Captured Image State (The new one you added)
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Hook 3: Camera Reference
+  // ============================================================
+  // 2. REFS
+  // ============================================================
+
   const cameraRef = useRef<UvcCameraHandle>(null);
 
-  // Hook 4: Effect for Permissions
+  // ============================================================
+  // 3. EFFECTS
+  // ============================================================
+
   useEffect(() => {
     checkPermissions();
   }, []);
 
+  // Clear error message after 3 seconds
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [errorMessage]);
+
   // ============================================================
-  // 2. HELPER FUNCTIONS
+  // 4. PERMISSION HANDLING
   // ============================================================
 
   const checkPermissions = async () => {
@@ -53,14 +74,59 @@ export default function App() {
     }
   };
 
+  // ============================================================
+  // 5. CAMERA EVENT HANDLERS
+  // ============================================================
+
+  const handleCameraReady = useCallback((device: DeviceInfo) => {
+    console.log('Camera ready:', device);
+    setDeviceInfo(device);
+    setErrorMessage(null);
+  }, []);
+
+  const handleCameraError = useCallback((error: CameraError) => {
+    console.error('Camera error:', error);
+
+    let message = error.message;
+    switch (error.code) {
+      case CameraErrorCodes.NO_DEVICE_FOUND:
+        message = 'No UVC camera found. Please connect a USB camera.';
+        break;
+      case CameraErrorCodes.PERMISSION_DENIED:
+        message = 'USB permission denied. Please allow access when prompted.';
+        break;
+      case CameraErrorCodes.CAPTURE_FAILED:
+        message = 'Failed to capture image. Please try again.';
+        break;
+    }
+
+    setErrorMessage(message);
+    setIsCapturing(false);
+  }, []);
+
+  const handleDeviceDisconnected = useCallback(() => {
+    console.log('Camera disconnected');
+    setDeviceInfo(null);
+    setCapturedUri(null);
+    setErrorMessage('Camera disconnected. Please reconnect.');
+  }, []);
+
+  // ============================================================
+  // 6. ACTION HANDLERS
+  // ============================================================
+
   const handleCapturePress = async () => {
-    if (cameraRef.current) {
+    if (cameraRef.current && !isCapturing) {
+      setIsCapturing(true);
       try {
         const { uri } = await cameraRef.current.takePicture();
         setCapturedUri(uri);
       } catch (e) {
         console.error('Failed to take picture:', e);
-        Alert.alert('Error', 'Failed to take picture');
+        const errorMsg = e instanceof Error ? e.message : 'Unknown error';
+        Alert.alert('Capture Failed', errorMsg);
+      } finally {
+        setIsCapturing(false);
       }
     }
   };
@@ -70,7 +136,7 @@ export default function App() {
   };
 
   // ============================================================
-  // 3. CONDITIONAL RETURNS (MUST BE AFTER ALL HOOKS)
+  // 7. RENDER
   // ============================================================
 
   // Check 1: Permissions
@@ -105,13 +171,39 @@ export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
+
+      {/* Error Banner */}
+      {errorMessage && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        </View>
+      )}
+
+      {/* Device Info */}
+      {deviceInfo && (
+        <View style={styles.deviceInfo}>
+          <Text style={styles.deviceInfoText}>📷 {deviceInfo.deviceName}</Text>
+        </View>
+      )}
+
       <UvcCamera
         ref={cameraRef}
         style={styles.camera}
+        captureTimeout={15000}
+        onCameraReady={handleCameraReady}
+        onCameraError={handleCameraError}
+        onDeviceDisconnected={handleDeviceDisconnected}
       />
+
       <View style={styles.overlay}>
-        <TouchableOpacity onPress={handleCapturePress} style={styles.btnOuter}>
-          <View style={styles.btnInner} />
+        <TouchableOpacity
+          onPress={handleCapturePress}
+          style={[styles.btnOuter, isCapturing && styles.btnCapturing]}
+          disabled={isCapturing}
+        >
+          <View
+            style={[styles.btnInner, isCapturing && styles.btnInnerCapturing]}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -140,11 +232,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
+  btnCapturing: {
+    borderColor: '#888',
+  },
   btnInner: {
     width: 60,
     height: 60,
     borderRadius: 30,
     backgroundColor: 'white',
+  },
+  btnInnerCapturing: {
+    backgroundColor: '#888',
+    width: 40,
+    height: 40,
+    borderRadius: 8,
   },
   previewImage: {
     flex: 1,
@@ -177,5 +278,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: 'black',
+  },
+  errorBanner: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(255, 68, 68, 0.9)',
+    padding: 12,
+    borderRadius: 8,
+    zIndex: 100,
+    elevation: 100,
+  },
+  errorText: {
+    color: 'white',
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  deviceInfo: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    padding: 8,
+    borderRadius: 8,
+    zIndex: 50,
+    elevation: 50,
+  },
+  deviceInfoText: {
+    color: 'white',
+    fontSize: 12,
+    textAlign: 'center',
   },
 });

@@ -5,10 +5,10 @@ import { Commands } from '../UvcCameraNativeComponent';
 
 // Mock the native component and commands
 jest.mock('../UvcCameraNativeComponent', () => {
-  const React = require('react');
-  class NativeComponent extends React.Component {
+  const ReactLib = require('react');
+  class NativeComponent extends ReactLib.Component {
     render() {
-      return React.createElement('UvcCameraView', this.props);
+      return ReactLib.createElement('UvcCameraView', this.props);
     }
   }
   return {
@@ -37,8 +37,10 @@ describe('UvcCamera', () => {
 
     // Find the native component to simulate event
     // We look for the element that has onPictureTaken prop
-    const nativeComponent = instance.find((node: any) => node.props.onPictureTaken);
-    
+    const nativeComponent = instance.find(
+      (node: any) => node.props.onPictureTaken
+    );
+
     // Simulate onPictureTaken event
     const uri = 'file://test.jpg';
     act(() => {
