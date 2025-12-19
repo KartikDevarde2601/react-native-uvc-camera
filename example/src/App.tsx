@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,7 +11,7 @@ import {
   Text,
 } from 'react-native';
 
-import { UvcCameraView, Commands } from 'react-native-uvc-camera';
+import { UvcCamera, type UvcCameraHandle } from 'react-native-uvc-camera';
 
 export default function App() {
   // ============================================================
@@ -25,7 +25,7 @@ export default function App() {
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
 
   // Hook 3: Camera Reference
-  const cameraRef = useRef<React.ElementRef<typeof UvcCameraView>>(null);
+  const cameraRef = useRef<UvcCameraHandle>(null);
 
   // Hook 4: Effect for Permissions
   useEffect(() => {
@@ -53,15 +53,16 @@ export default function App() {
     }
   };
 
-  const handleCapturePress = () => {
+  const handleCapturePress = async () => {
     if (cameraRef.current) {
-      Commands.takePicture(cameraRef.current);
+      try {
+        const { uri } = await cameraRef.current.takePicture();
+        setCapturedUri(uri);
+      } catch (e) {
+        console.error('Failed to take picture:', e);
+        Alert.alert('Error', 'Failed to take picture');
+      }
     }
-  };
-
-  const onPictureTaken = (event: any) => {
-    const { uri } = event.nativeEvent;
-    setCapturedUri(uri);
   };
 
   const handleRetake = () => {
@@ -104,10 +105,9 @@ export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-      <UvcCameraView
+      <UvcCamera
         ref={cameraRef}
         style={styles.camera}
-        onPictureTaken={onPictureTaken}
       />
       <View style={styles.overlay}>
         <TouchableOpacity onPress={handleCapturePress} style={styles.btnOuter}>
