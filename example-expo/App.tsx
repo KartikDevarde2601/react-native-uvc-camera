@@ -1,16 +1,11 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  PermissionsAndroid,
-  Platform,
-  StatusBar,
-  Alert,
-  Image,
-  Text,
-} from 'react-native';
-
+import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, Text, View } from 'react-native';
+import { PermissionsAndroid } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert } from 'react-native';
+import { Platform } from 'react-native';
+import { Image } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import {
   UvcCamera,
   type UvcCameraHandle,
@@ -20,10 +15,6 @@ import {
 } from '@kartik512/react-native-uvc-camera';
 
 export default function App() {
-  // ============================================================
-  // 1. STATE HOOKS
-  // ============================================================
-
   const [hasPermission, setHasPermission] = useState(false);
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
