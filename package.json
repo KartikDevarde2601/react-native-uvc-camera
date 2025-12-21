@@ -1,5 +1,5 @@
 {
-  "name": "react-native-uvc-camera",
+  "name": "@kartik512/react-native-uvc-camera",
   "version": "0.1.0",
   "description": "UVC Camera support for React Native",
   "main": "./lib/module/index.js",
